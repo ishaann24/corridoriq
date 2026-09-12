@@ -123,7 +123,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 find_button = st.button("Find Opportunities", type="primary", use_container_width=True)
 
 if find_button:
-    results = rank_corridors(
+    st.session_state["results"] = rank_corridors(
         dataset=dataset,
         metro_id=region,
         archetype_id=archetype_id,
@@ -131,7 +131,13 @@ if find_button:
         period=period,
         top_k=5
     )
+    # Clear previous expander states on a new search
+    for k in list(st.session_state.keys()):
+        if k.startswith("expanded_") or k.startswith("explain_output_"):
+            del st.session_state[k]
 
+if "results" in st.session_state:
+    results = st.session_state["results"]
     if not results:
         st.warning("No opportunities found for the selected parameters.")
     else:
@@ -139,7 +145,10 @@ if find_button:
         
         for res in results:
             title = f"{res['opportunity_score']} — {res['corridor_name']}"
-            with st.expander(title, expanded=False):
+            exp_state_key = f"expanded_{res['corridor_id']}"
+            is_expanded = st.session_state.get(exp_state_key, False)
+            
+            with st.expander(title, expanded=is_expanded):
                 # Overview metrics
                 m1, m2, m3, m4 = st.columns(4)
                 m1.metric("Opportunity Score", f"{res['opportunity_score']} / 100")
@@ -188,6 +197,8 @@ if find_button:
 
                 if st.button("Explain this recommendation", key=btn_key):
                     st.session_state[exp_key] = get_groq_explanation(res)
+                    st.session_state[exp_state_key] = True
+                    st.rerun()
 
                 if exp_key in st.session_state:
                     st.info(st.session_state[exp_key])

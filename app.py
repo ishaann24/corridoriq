@@ -202,3 +202,156 @@ if "results" in st.session_state:
 
                 if exp_key in st.session_state:
                     st.info(st.session_state[exp_key])
+
+# --- Ask CorridorIQ Section ---
+st.markdown("---")
+st.subheader("Ask CorridorIQ")
+
+TOOLS_SCHEMA = [
+    {
+        "type": "function",
+        "function": {
+            "name": "rank_corridors",
+            "description": "Rank top 5 commercial corridors for a metro region, business archetype, audience segment, and period.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "region": {
+                        "type": "string",
+                        "description": "Metro region ID, either 'nyc' or 'dallas-fort-worth'."
+                    },
+                    "archetype_id": {
+                        "type": "string",
+                        "description": "Business archetype ID, e.g. 'us.cafe.neighborhood_seated.v1'."
+                    },
+                    "audience_segment_id": {
+                        "type": "string",
+                        "description": "Audience segment ID, e.g. 'morning_commuters', 'young_professionals'."
+                    },
+                    "period": {
+                        "type": "string",
+                        "description": "Time period: 'morning', 'afternoon', 'evening', or 'night'."
+                    }
+                },
+                "required": ["region", "archetype_id", "audience_segment_id", "period"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_corridor_summary",
+            "description": "Get detailed score breakdown and summary for a specific corridor.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "corridor_id": {
+                        "type": "string",
+                        "description": "Unique identifier of the corridor."
+                    },
+                    "archetype_id": {
+                        "type": "string",
+                        "description": "Business archetype ID."
+                    },
+                    "audience_segment_id": {
+                        "type": "string",
+                        "description": "Audience segment ID."
+                    },
+                    "period": {
+                        "type": "string",
+                        "description": "Time period: 'morning', 'afternoon', 'evening', or 'night'."
+                    }
+                },
+                "required": ["corridor_id", "archetype_id", "audience_segment_id", "period"]
+            }
+        }
+    }
+]
+
+ask_query = st.text_input("Ask a question about corridors", key="ask_corridoriq_input")
+ask_submit = st.button("Submit Question", key="ask_corridoriq_submit")
+
+if ask_submit and ask_query:
+    try:
+        api_key = os.environ.get("GROQ_API_KEY")
+        if not api_key:
+            try:
+                api_key = st.secrets.get("GROQ_API_KEY")
+            except Exception:
+                api_key = None
+
+        if not api_key or Groq is None:
+            st.error("Groq API key is missing or groq package is not available.")
+        else:
+            client = Groq(api_key=api_key)
+            system_prompt = (
+                "You help answer questions about NYC and Dallas-Fort Worth commercial corridors. "
+                "Use the tools to fetch real data before answering. Never invent corridor names, scores, or facts. "
+                "If you don't have enough information from the user's question to call a tool "
+                "(missing region, business type, audience, or time period), ask a clarifying question instead of guessing."
+            )
+
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": ask_query}
+            ]
+
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages,
+                tools=TOOLS_SCHEMA,
+                tool_choice="auto",
+                temperature=0.3,
+                max_tokens=500
+            )
+
+            response_message = response.choices[0].message
+
+            if response_message.tool_calls:
+                messages.append(response_message)
+                for tool_call in response_message.tool_calls:
+                    function_name = tool_call.function.name
+                    args = json.loads(tool_call.function.arguments)
+
+                    if function_name == "rank_corridors":
+                        tool_result = rank_corridors(
+                            dataset=dataset,
+                            metro_id=args.get("region"),
+                            archetype_id=args.get("archetype_id"),
+                            audience_segment_id=args.get("audience_segment_id"),
+                            period=args.get("period"),
+                            top_k=5
+                        )
+                    elif function_name == "get_corridor_summary":
+                        tool_result = get_corridor_summary(
+                            dataset=dataset,
+                            corridor_id=args.get("corridor_id"),
+                            archetype_id=args.get("archetype_id"),
+                            audience_segment_id=args.get("audience_segment_id"),
+                            period=args.get("period")
+                        )
+                    else:
+                        tool_result = {"error": f"Unknown tool {function_name}"}
+
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "name": function_name,
+                        "content": json.dumps(tool_result)
+                    })
+
+                second_response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=messages,
+                    temperature=0.3,
+                    max_tokens=500
+                )
+                final_answer = second_response.choices[0].message.content
+            else:
+                final_answer = response_message.content
+
+            if final_answer:
+                st.info(final_answer)
+
+    except Exception as e:
+        st.error(f"Error executing Ask CorridorIQ: {str(e)}")

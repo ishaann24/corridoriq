@@ -1,0 +1,54 @@
+{
+  "export_schema_version": "v26-corridor-export-manifest-v1",
+  "exported_at": "2026-09-11T12:11:09.170997+00:00",
+  "bundle_id": "usa-corridors-20260906-r2",
+  "bundle_sha256": "e0f2fd58ae90140de6b5a4b6d392fa299a10e2159071ad0883213127152504c0",
+  "metros": [
+    {
+      "metro_id": "nyc",
+      "release_id": "nyc-corridors-20260906-r2",
+      "counts": {
+        "corridors": 65,
+        "audience_segments": 55,
+        "archetypes": 31,
+        "corridor_archetype_scores": 1860,
+        "special_zones": 25,
+        "map_geometry_records": 0,
+        "map_context_records": 60,
+        "h3_10_ownership_records": 81767
+      },
+      "files": [
+        {
+          "file": "NYC_CORRIDORS.full.json",
+          "bytes": 12001227,
+          "sha256": "81d9a2c2280f972b954cdf9762a5b650319da8d846a770a8dbc9c517fa21da97"
+        },
+        {
+          "file": "NYC_CORRIDOR_H3_10_OWNERSHIP.json",
+          "bytes": 23039041,
+          "sha256": "fe88c52c80d79d28fd344a4006c92e54812f08b9e2a0981056e0653644256889"
+        }
+      ]
+    },
+    {
+      "metro_id": "dallas-fort-worth",
+      "release_id": "dallas-fort-worth-corridors-20260906-r1",
+      "counts": {
+        "corridors": 72,
+        "audience_segments": 55,
+        "archetypes": 67,
+        "corridor_archetype_scores": 4824,
+        "special_zones": 37,
+        "map_geometry_records": 72,
+        "map_context_records": 72
+      },
+      "files": [
+        {
+          "file": "DALLAS_FORT_WORTH_CORRIDORS.full.json",
+          "bytes": 18140501,
+          "sha256": "27b905ec7a51f4a1fcca128ca38de178a5a20cd6a0d80f19988d509c2186c436"
+        }
+      ]
+    }
+  ]
+}

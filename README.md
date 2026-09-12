@@ -4,7 +4,7 @@ An AI-assisted commercial corridor opportunity finder for entrepreneurs deciding
 where to open a business. Built for the "Beyond the Prompt" hackathon using the
 NYC and Dallas–Fort Worth commercial corridor dataset.
 
-#deployment link- https://corridoriq.streamlit.app/
+deployment link- https://corridoriq.streamlit.app/
 
 ## What it does
 

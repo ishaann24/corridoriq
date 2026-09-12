@@ -54,7 +54,7 @@ def get_groq_explanation(res: dict) -> str:
             "using language like 'shows strong signals for' rather than 'will succeed.'"
         )
         completion = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": system_msg},
                 {"role": "user", "content": json.dumps(evidence)}
@@ -297,7 +297,7 @@ if ask_submit and ask_query:
             ]
 
             response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="openai/gpt-oss-20b",
                 messages=messages,
                 tools=TOOLS_SCHEMA,
                 tool_choice="auto",
@@ -341,7 +341,7 @@ if ask_submit and ask_query:
                     })
 
                 second_response = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
+                    model="openai/gpt-oss-20b",
                     messages=messages,
                     temperature=0.3,
                     max_tokens=500
